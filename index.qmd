@@ -1,0 +1,158 @@
+---
+title: "Population dividend"
+subtitle: "Animation of population by age over time"
+author: "James Goldie, 360info"
+date: "2022-11-08"
+code-fold: true
+---
+
+```{r}
+#| label: setup
+library(tidyverse)
+library(lubridate)
+library(themes360info)
+library(gganimate)
+library(ragg)
+library(here)
+```
+
+```{r}
+#| label: import
+
+url_base <- paste0(
+  "https://population.un.org/wpp/Download/Files/1_Indicators%20(Standard)/",
+  "/CSV_FILES/WPP2022_PopulationBySingleAgeSex_")
+
+obs_file <- "Medium_1950-2021.zip"
+temp_zip <- tempfile(fileext = ".zip")
+download.file(paste0(url_base, obs_file), temp_zip)
+unzip(temp_zip, exdir = here("data"))
+
+here("data", "WPP2022_PopulationBySingleAgeSex_Medium_1950-2021.csv") %>%
+  read_csv() ->
+pop_all
+```
+
+```{r}
+#| label: tidy-fn
+
+get_combined_figures <- function(df) {
+  df %>%
+    select(Time, AgeGrpStart, starts_with("Pop")) %>%
+    mutate(across(starts_with("Pop"), ~ .x * 1000))->
+  pop_world
+
+  # work out proportions toolspop_world %>%
+  pop_world %>%
+    group_by(Time) %>%
+    mutate(
+      measure = "Percentage of people",
+      across(starts_with("Pop"), ~ .x / sum(.x, na.rm = TRUE) * 100)) ->
+  pop_prop_world
+
+  pop_world %>%
+    mutate(measure = "Number of people") %>%
+    bind_rows(pop_prop_world) ->
+  pop_combined
+
+  return(pop_combined)
+}
+```
+
+```{r}
+#| label: animate-fn
+
+render_pop_curve <- function(df, country, path, rel = FALSE) {
+
+  if (rel) {
+    y_labels <- scales::label_percent()
+  } else {
+    y_labels <- scales::label_number(scale_cut = scales::cut_short_scale())
+  }
+
+  p <- ggplot(df) +
+    aes(x = AgeGrpStart, y = PopTotal) +
+    transition_time(Time) +
+    enter_grow() + 
+    exit_shrink() +
+    facet_wrap(vars(measure), ncol = 1, scales = "free_y") +
+    ease_aes("sine-in-out") +
+    geom_col() +
+    # scale_y_continuous(labels = y_labels) +
+    theme_minimal(base_size = 24) +
+    labs(x = "Age", y = "Population",
+      title = paste0(country, "population in {as.integer(frame_time)}"))
+
+  anim_save(
+    path,
+    animate(p,
+      device = "ragg_png", width = 1920, height = 1080,
+      renderer = ffmpeg_renderer(ffmpeg = "/opt/homebrew/bin/ffmpeg")))
+}
+```
+
+## Global population
+
+```{r}
+#| label: world
+
+pop_all %>%
+  filter(Location == "World") %>%
+  get_combined_figures() %>%
+  render_pop_curve(here("out", "world.mov"))
+```
+
+## India
+
+```{r}
+#| label: india
+
+pop_all %>%
+  filter(Location == "India") %>%
+  get_combined_figures() %>%
+  render_pop_curve(here("out", "india.mov"))
+```
+
+## China
+
+```{r}
+#| label: china
+
+pop_all %>%
+  filter(Location == "China") %>%
+  get_combined_figures() %>%
+  render_pop_curve(here("out", "china.mov"))
+```
+
+## Australia
+
+```{r}
+#| label: australia
+
+pop_all %>%
+  filter(Location == "Australia") %>%
+  get_combined_figures() %>%
+  render_pop_curve(here("out", "australia.mov"))
+```
+
+## Indonesia
+
+```{r}
+#| label: indonesia
+
+pop_all %>%
+  filter(Location == "Indonesia") %>%
+  get_combined_figures() %>%
+  render_pop_curve(here("out", "indonesia.mov"))
+```
+
+## Japan
+
+```{r}
+#| label: japan
+
+pop_all %>%
+  filter(Location == "Japan") %>%
+  get_combined_figures() %>%
+  render_pop_curve(here("out", "japan.mov"))
+```
