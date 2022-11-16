@@ -99,15 +99,18 @@ render_pop_curve <- function(df, country, path, video = FALSE) {
 
   } else {
 
+    dir.create(file.path(path, country), showWarnings = FALSE)
+
     anim_save(
-      path,
+      file.path(path, country),
       animate(p,
         nframes = max(df$Time, na.rm = TRUE) - min(df$Time, na.rm = TRUE) + 1,
         device = "svglite", width = 8, height = 4.5,
-        renderer = file_renderer(path, prefix = paste0(country, "-"),
-          overwrite = TRUE)))
+        renderer = file_renderer(file.path(path, country),
+          prefix = paste0(country, "-"), overwrite = TRUE)))
   }
 
+  return(invisible(df))
 }
 ```
 
@@ -122,6 +125,7 @@ pop_all %>%
   filter(Location == "World") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
+  render_pop_curve("World", here("out"), video = TRUE) %>%
   render_pop_curve("World", here("out"))
 ```
 
@@ -134,7 +138,8 @@ pop_all %>%
   filter(Location == "India") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
-  render_pop_curve("Indian", here("out"))
+  render_pop_curve("India", here("out"), video = TRUE) %>%
+  render_pop_curve("India", here("out"))
 ```
 
 ## China
@@ -146,7 +151,8 @@ pop_all %>%
   filter(Location == "China") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
-  render_pop_curve("Chinese", here("out"))
+  render_pop_curve("China", here("out"), video = TRUE) %>%
+  render_pop_curve("China", here("out"))
 ```
 
 ## Australia
@@ -158,7 +164,8 @@ pop_all %>%
   filter(Location == "Australia") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
-  render_pop_curve("Australian", here("out"))
+  render_pop_curve("Australia", here("out"), video = TRUE) %>%
+  render_pop_curve("Australia", here("out"))
 ```
 
 ## Indonesia
@@ -170,7 +177,8 @@ pop_all %>%
   filter(Location == "Indonesia") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
-  render_pop_curve("Indonesian", here("out"))
+  render_pop_curve("Indonesia", here("out"), video = TRUE) %>%
+  render_pop_curve("Indonesia", here("out"))
 ```
 
 ## Japan
@@ -182,7 +190,8 @@ pop_all %>%
   filter(Location == "Japan") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
-  render_pop_curve("Japanese", here("out"))
+  render_pop_curve("Japan", here("out"), video = TRUE) %>%
+  render_pop_curve("Japan", here("out"))
 ```
 
 
@@ -195,7 +204,8 @@ pop_all %>%
   filter(Location == "Malaysia") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
-  render_pop_curve("Malaysian", here("out"))
+  render_pop_curve("Malaysia", here("out"), video = TRUE) %>%
+  render_pop_curve("Malaysia", here("out"))
 ```
 
 ## South Korea
@@ -207,7 +217,8 @@ pop_all %>%
   filter(Location == "Republic of Korea") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
-  render_pop_curve("South Korean", here("out"))
+  render_pop_curve("South Korea", here("out"), video = TRUE) %>%
+  render_pop_curve("South Korea", here("out"))
 ```
 
 ## Tuvalu
@@ -219,6 +230,6 @@ pop_all %>%
   filter(Location == "Tuvalu") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
-  render_pop_curve("Tuvalu", here("out"), video = TRUE)
+  render_pop_curve("Tuvalu", here("out"), video = TRUE) %>%
+  render_pop_curve("Tuvalu", here("out"))
 ```
-
