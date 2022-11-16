@@ -1,0 +1,234 @@
+---
+title: "Population dividend"
+subtitle: "Animation of population by age over time"
+author: "James Goldie, 360info"
+date: "2022-11-08"
+code-fold: true
+---
+
+```{r}
+#| label: setup
+library(tidyverse)
+library(lubridate)
+library(gganimate)
+library(ragg)
+library(here)
+```
+
+```{r}
+#| label: import
+
+url_base <- paste0(
+  "https://population.un.org/wpp/Download/Files/1_Indicators%20(Standard)/",
+  "/CSV_FILES/WPP2022_PopulationBySingleAgeSex_")
+
+obs_file <- "Medium_1950-2021.zip"
+temp_zip <- tempfile(fileext = ".zip")
+download.file(paste0(url_base, obs_file), temp_zip)
+unzip(temp_zip, exdir = here("data"))
+
+here("data", "WPP2022_PopulationBySingleAgeSex_Medium_1950-2021.csv") %>%
+  read_csv() ->
+pop_all
+```
+
+```{r}
+#| label: tidy-fn
+
+get_combined_figures <- function(df) {
+  df %>%
+    select(Time, AgeGrpStart, starts_with("Pop")) %>%
+    mutate(across(starts_with("Pop"), ~ .x * 1000))->
+  pop_world
+
+  # work out proportions toolspop_world %>%
+  pop_world %>%
+    group_by(Time) %>%
+    mutate(
+      measure = "Percentage of people",
+      across(starts_with("Pop"), ~ .x / sum(.x, na.rm = TRUE) * 100)) ->
+  pop_prop_world
+
+  pop_world %>%
+    mutate(measure = "Number of people") %>%
+    bind_rows(pop_prop_world) ->
+  pop_combined
+
+  return(pop_combined)
+}
+```
+
+```{r}
+#| label: animate-fn
+
+render_pop_curve <- function(df, country, path, video = FALSE) {
+
+  p <- ggplot(df) +
+    aes(x = AgeGrpStart, y = PopTotal) +
+    transition_time(Time) +
+    enter_grow() + 
+    exit_shrink() +
+    ease_aes("sine-in-out") +
+    annotate("rect",
+      xmin = 16, xmax = 65, ymin = -Inf, ymax = Inf,
+      colour = NA,
+      fill = colours_360("lightblue"), alpha = 0.5
+    ) +
+    annotate("text", label = "WORKING AGE",
+      x = 40.5,
+      y = Inf,
+      hjust = 0.5, vjust = 2,
+      size = 6, alpha = 0.5) +
+    geom_col(fill = "#222222") +
+    scale_y_continuous(
+      labels = scales::label_number(scale_cut = scales::cut_short_scale()),
+      expand = expansion(c(0, 0.1))) +
+    theme_minimal(base_size = 14) +
+    labs(x = "Age", y = "Population",
+      title = paste(country, "population in {as.integer(frame_time)}"))
+
+  if (video) {
+
+    anim_save(
+      file.path(path, paste0(country, ".mov")),
+      animate(p,
+        nframes = max(df$Time, na.rm = TRUE) - min(df$Time, na.rm = TRUE) + 1,
+        device = "ragg_png", width = 1920, height = 1080,
+        renderer = ffmpeg_renderer(ffmpeg = "/opt/homebrew/bin/ffmpeg")))
+
+  } else {
+
+    dir.create(file.path(path, country), showWarnings = FALSE)
+
+    anim_save(
+      file.path(path, country),
+      animate(p,
+        nframes = max(df$Time, na.rm = TRUE) - min(df$Time, na.rm = TRUE) + 1,
+        device = "svglite", width = 8, height = 4.5,
+        renderer = file_renderer(file.path(path, country),
+          prefix = paste0(country, "-"), overwrite = TRUE)))
+  }
+
+  return(invisible(df))
+}
+```
+
+Add `video = TRUE` to `render_pop_curve` in the sections below to export a quick video instead of SVG frames. (Note if you're rendering the whole doc: the frame renderer is throwing an error, even though it outputs correctly.)
+
+## Global population
+
+```{r}
+#| label: world
+
+pop_all %>%
+  filter(Location == "World") %>%
+  get_combined_figures() %>%
+  filter(measure == "Number of people") %>%
+  render_pop_curve("World", here("out"), video = TRUE) %>%
+  render_pop_curve("World", here("out"))
+```
+
+## India
+
+```{r}
+#| label: india
+
+pop_all %>%
+  filter(Location == "India") %>%
+  get_combined_figures() %>%
+  filter(measure == "Number of people") %>%
+  render_pop_curve("India", here("out"), video = TRUE) %>%
+  render_pop_curve("India", here("out"))
+```
+
+## China
+
+```{r}
+#| label: china
+
+pop_all %>%
+  filter(Location == "China") %>%
+  get_combined_figures() %>%
+  filter(measure == "Number of people") %>%
+  render_pop_curve("China", here("out"), video = TRUE) %>%
+  render_pop_curve("China", here("out"))
+```
+
+## Australia
+
+```{r}
+#| label: australia
+
+pop_all %>%
+  filter(Location == "Australia") %>%
+  get_combined_figures() %>%
+  filter(measure == "Number of people") %>%
+  render_pop_curve("Australia", here("out"), video = TRUE) %>%
+  render_pop_curve("Australia", here("out"))
+```
+
+## Indonesia
+
+```{r}
+#| label: indonesia
+
+pop_all %>%
+  filter(Location == "Indonesia") %>%
+  get_combined_figures() %>%
+  filter(measure == "Number of people") %>%
+  render_pop_curve("Indonesia", here("out"), video = TRUE) %>%
+  render_pop_curve("Indonesia", here("out"))
+```
+
+## Japan
+
+```{r}
+#| label: japan
+
+pop_all %>%
+  filter(Location == "Japan") %>%
+  get_combined_figures() %>%
+  filter(measure == "Number of people") %>%
+  render_pop_curve("Japan", here("out"), video = TRUE) %>%
+  render_pop_curve("Japan", here("out"))
+```
+
+
+## Malaysia
+
+```{r}
+#| label: malaysia
+
+pop_all %>%
+  filter(Location == "Malaysia") %>%
+  get_combined_figures() %>%
+  filter(measure == "Number of people") %>%
+  render_pop_curve("Malaysia", here("out"), video = TRUE) %>%
+  render_pop_curve("Malaysia", here("out"))
+```
+
+## South Korea
+
+```{r}
+#| label: south-korea
+
+pop_all %>%
+  filter(Location == "Republic of Korea") %>%
+  get_combined_figures() %>%
+  filter(measure == "Number of people") %>%
+  render_pop_curve("South Korea", here("out"), video = TRUE) %>%
+  render_pop_curve("South Korea", here("out"))
+```
+
+## Tuvalu
+
+```{r}
+#| label: tuvalu
+
+pop_all %>%
+  filter(Location == "Tuvalu") %>%
+  get_combined_figures() %>%
+  filter(measure == "Number of people") %>%
+  render_pop_curve("Tuvalu", here("out"), video = TRUE) %>%
+  render_pop_curve("Tuvalu", here("out"))
+```
