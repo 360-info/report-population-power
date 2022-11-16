@@ -2,7 +2,7 @@
 
 Visualises the change in countries' demographic profiles over time.
 
-## Use + Remix rights
+## ♻️ Use + Remix rights
 
 ![[Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0)](https://mirrors.creativecommons.org/presskit/buttons/80x15/png/by.png)
 
@@ -16,7 +16,11 @@ Data in these charts comes from:
 
 **Please attribute 360info and the data sources when you use and remix these visualisations.**
 
-## Reproduce the analysis
+## 📽 Ready-to-use graphics
+
+Animations and image sequences ready for editing software are in the [`/out`](./out) folder.
+
+## 🛠 Reproduce the analysis
 
 ### 💨 Quickstart: use the dev container
 
