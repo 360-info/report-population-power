@@ -114,7 +114,7 @@ render_pop_curve <- function(df, country, path, video = FALSE) {
 }
 ```
 
-Add `video = TRUE` to `render_pop_curve` in the sections below to export a quick video instead of SVG frames.
+Add `video = TRUE` to `render_pop_curve` in the sections below to export a quick video instead of SVG frames. (Note if you're rendering the whole doc: the frame renderer is throwing an error, even though it outputs correctly.)
 
 ## Global population
 
