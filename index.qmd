@@ -10,7 +10,6 @@ code-fold: true
 #| label: setup
 library(tidyverse)
 library(lubridate)
-library(themes360info)
 library(gganimate)
 library(ragg)
 library(here)
