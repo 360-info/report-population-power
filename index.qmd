@@ -18,13 +18,17 @@ library(here)
 ```{r}
 #| label: import
 
-url_base <- paste0(
-  "https://population.un.org/wpp/Download/Files/1_Indicators%20(Standard)/",
-  "/CSV_FILES/WPP2022_PopulationBySingleAgeSex_")
+# NOTE - an OpenSSL conf is supplied with this workspace to allow downloading
+# data from a UN population server that is improperly configured. be aware that
+# an attacker could try to mimic this server when you are downloading this data.
 
+url_base <- paste0(
+  "https://population.un.org/wpp/Download/Files/1_Indicators%20(Standard)",
+  "/CSV_FILES/WPP2022_Population1JanuaryBySingleAgeSex_")
 obs_file <- "Medium_1950-2021.zip"
 temp_zip <- tempfile(fileext = ".zip")
-download.file(paste0(url_base, obs_file), temp_zip)
+options(timeout = max(300, getOption("timeout")))
+download.file(url, temp_zip)
 unzip(temp_zip, exdir = here("data"))
 
 here("data", "WPP2022_PopulationBySingleAgeSex_Medium_1950-2021.csv") %>%
