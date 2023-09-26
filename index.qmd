@@ -11,9 +11,16 @@ code-fold: true
 library(tidyverse)
 library(lubridate)
 library(gganimate)
+library(themes360info)
 library(ragg)
 library(here)
 ```
+
+First, let's download the UN population observations and projections.
+
+:::{.callout-note}
+Note
+:::
 
 ```{r}
 #| label: import
@@ -22,18 +29,38 @@ library(here)
 # data from a UN population server that is improperly configured. be aware that
 # an attacker could try to mimic this server when you are downloading this data.
 
+expected_obs_fname <- "WPP2022_PopulationBySingleAgeSex_Medium_1950-2021.csv"
+expected_proj_fname <- "WPP2022_Population1JanuaryBySingleAgeSex_Medium_2022-2100.csv"
 url_base <- paste0(
   "https://population.un.org/wpp/Download/Files/1_Indicators%20(Standard)",
   "/CSV_FILES/WPP2022_Population1JanuaryBySingleAgeSex_")
-obs_file <- "Medium_1950-2021.zip"
-temp_zip <- tempfile(fileext = ".zip")
 options(timeout = max(300, getOption("timeout")))
-download.file(url, temp_zip)
-unzip(temp_zip, exdir = here("data"))
 
-here("data", "WPP2022_PopulationBySingleAgeSex_Medium_1950-2021.csv") %>%
+# download + unzip the obs if they're unavailable
+if (!file.exists(here("data", expected_obs_fname))) {
+  obs_file <- "Medium_1950-2021.zip"
+  temp_zip_obs <- tempfile(fileext = ".zip")
+  download.file(paste0(url_base, obs_file), temp_zip_obs)
+  unzip(temp_zip_obs, exdir = here("data"))
+}
+
+# download + unzip the projections if they're unavailable
+if (!file.exists(here("data", expected_proj_fname))) {
+  proj_file <- "Medium_2022-2100.zip"
+  temp_zip_proj <- tempfile(fileext = ".zip")
+  download.file(paste0(url_base, proj_file), temp_zip_proj)
+  unzip(temp_zip_proj, exdir = here("data"))
+}
+
+# import into r
+
+here("data", expected_obs_fname) |>
   read_csv() ->
-pop_all
+pop_obs
+
+here("data", expected_proj_fname) |>
+  read_csv() ->
+pop_proj
 ```
 
 ```{r}
@@ -42,7 +69,7 @@ pop_all
 get_combined_figures <- function(df) {
   df %>%
     select(Time, AgeGrpStart, starts_with("Pop")) %>%
-    mutate(across(starts_with("Pop"), ~ .x * 1000))->
+    mutate(across(starts_with("Pop"), ~ .x * 1000)) ->
   pop_world
 
   # work out proportions toolspop_world %>%
@@ -119,12 +146,14 @@ render_pop_curve <- function(df, country, path, video = FALSE) {
 
 Add `video = TRUE` to `render_pop_curve` in the sections below to export a quick video instead of SVG frames. (Note if you're rendering the whole doc: the frame renderer is throwing an error, even though it outputs correctly.)
 
+# Regional age waves
+
 ## Global population
 
 ```{r}
 #| label: world
 
-pop_all %>%
+pop_obs %>%
   filter(Location == "World") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
@@ -137,7 +166,7 @@ pop_all %>%
 ```{r}
 #| label: india
 
-pop_all %>%
+pop_obs %>%
   filter(Location == "India") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
@@ -150,7 +179,7 @@ pop_all %>%
 ```{r}
 #| label: china
 
-pop_all %>%
+pop_obs %>%
   filter(Location == "China") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
@@ -163,7 +192,7 @@ pop_all %>%
 ```{r}
 #| label: australia
 
-pop_all %>%
+pop_obs %>%
   filter(Location == "Australia") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
@@ -176,7 +205,7 @@ pop_all %>%
 ```{r}
 #| label: indonesia
 
-pop_all %>%
+pop_obs %>%
   filter(Location == "Indonesia") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
@@ -189,7 +218,7 @@ pop_all %>%
 ```{r}
 #| label: japan
 
-pop_all %>%
+pop_obs %>%
   filter(Location == "Japan") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
@@ -203,7 +232,7 @@ pop_all %>%
 ```{r}
 #| label: malaysia
 
-pop_all %>%
+pop_obs %>%
   filter(Location == "Malaysia") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
@@ -216,7 +245,7 @@ pop_all %>%
 ```{r}
 #| label: south-korea
 
-pop_all %>%
+pop_obs %>%
   filter(Location == "Republic of Korea") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
@@ -229,10 +258,115 @@ pop_all %>%
 ```{r}
 #| label: tuvalu
 
-pop_all %>%
+pop_obs %>%
   filter(Location == "Tuvalu") %>%
   get_combined_figures() %>%
   filter(measure == "Number of people") %>%
   render_pop_curve("Tuvalu", here("out"), video = TRUE) %>%
   render_pop_curve("Tuvalu", here("out"))
+```
+
+# Elderly in selected countries
+
+```{r}
+#| label: elderly-selected
+
+# confirm 
+
+pop_obs |>
+  bind_rows(pop_proj) |>
+  filter(Location %in% c("Japan", "Singapore", "Malaysia", "Australia", "India",
+    "Hong Kong", "Italy")) ->
+pop_selected
+
+# verify only single-age buckets. looks like a span of -1 is used for the
+# open-ended "age 100+" bucket
+stopifnot(
+  "Analysis expected only single-age buckets and an open-ended elderly bucket,
+    but there are buckets with several ages in them." =
+  (pop_selected |> pull(AgeGrpSpan) |> unique()) == c(1, -1))
+
+pop_selected |>
+  mutate(
+    age_group = case_match(AgeGrpStart,
+      0:14 ~ "dependent",
+      15:64 ~ "working",
+      65:150 ~ "dependent")) |>
+  group_by(ISO3_code, Location, Time, age_group) |>
+  summarise(
+    n_male = sum(PopMale, na.rm = TRUE),
+    n_female = sum(PopFemale, na.rm = TRUE),
+    n_total = sum(PopTotal, na.rm = TRUE)) |>
+  ungroup() |>
+  pivot_wider(names_from = age_group, values_from = starts_with("n_")) |>
+  mutate(
+    r_male_dependent = n_male_dependent / n_male_working,
+    r_male_working = n_male_working / n_male_dependent,
+    r_female_dependent =
+      n_female_dependent / n_female_working,
+    r_female_working =
+      n_female_working / n_female_dependent,
+    r_total_dependent =
+      n_total_dependent / n_total_working,
+    r_total_working =
+      n_total_working / n_total_dependent,
+    # finally, multiply numbers by 1000
+    across(starts_with("n_"), ~ .x * 1000)) ->
+dep_ratio_selected
+```
+
+```{r}
+#| label: plot-dependency-ratio
+
+dep_ratio_selected |>
+  mutate(
+    time_period = case_match(Time,
+      1950:2021 ~ "observed",
+      2022:2100 ~ "projected")) |>
+  write_csv(here("data", "dependency-ratios-selectedcountries.csv")) |>
+  ggplot() +
+    aes(
+      linetype = time_period,
+      x = Time,
+      y = r_total_dependent * 100) +
+    geom_line() +
+    facet_wrap(vars(Location)) +
+    theme_360() +
+    theme(
+      legend.position = "top",
+      legend.direction = "horizontal") +
+    labs(
+      x = NULL, y = "Dependency ratio",
+      title = "Dependency ratio",
+      linetype = NULL,
+      subtitle = paste(
+        "Dependency ratio measures how many dependent children and elderly",
+        "people<br>there are for every 100 working age people (15–64 years)"))
+```
+
+```{r}
+#| label: plot-dependent-numbers
+
+dep_ratio_selected |>
+  mutate(
+    time_period = case_match(Time,
+      1950:2021 ~ "observed",
+      2022:2100 ~ "projected")) |>
+  ggplot() +
+    aes(
+      linetype = time_period,
+      x = Time,
+      y = n_total_dependent) +
+    geom_line() +
+    facet_wrap(vars(Location), scales = "free_y") +
+    scale_y_continuous(
+      labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
+    theme_360() +
+    theme(
+      legend.position = "top",
+      legend.direction = "horizontal") +
+    labs(
+      x = NULL, y = "Number of people",
+      linetype = NULL,
+      title = "Growing elderly")
 ```
