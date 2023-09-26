@@ -311,7 +311,12 @@ pop_selected |>
     r_total_working =
       n_total_working / n_total_dependent,
     # finally, multiply numbers by 1000
-    across(starts_with("n_"), ~ .x * 1000)) ->
+    across(starts_with("n_"), ~ .x * 1000)) |>
+  mutate(
+    time_period = case_match(Time,
+      1950:2021 ~ "observed",
+      2022:2100 ~ "projected")) |>
+  write_csv(here("data", "dependency-ratios-selectedcountries.csv")) ->
 dep_ratio_selected
 ```
 
@@ -319,11 +324,6 @@ dep_ratio_selected
 #| label: plot-dependency-ratio
 
 dep_ratio_selected |>
-  mutate(
-    time_period = case_match(Time,
-      1950:2021 ~ "observed",
-      2022:2100 ~ "projected")) |>
-  write_csv(here("data", "dependency-ratios-selectedcountries.csv")) |>
   ggplot() +
     aes(
       linetype = time_period,
@@ -348,10 +348,6 @@ dep_ratio_selected |>
 #| label: plot-dependent-numbers
 
 dep_ratio_selected |>
-  mutate(
-    time_period = case_match(Time,
-      1950:2021 ~ "observed",
-      2022:2100 ~ "projected")) |>
   ggplot() +
     aes(
       linetype = time_period,
