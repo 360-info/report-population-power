@@ -26,8 +26,12 @@ Animations and image sequences ready for editing software are in the [`/out`](./
 
 This project comes with a ready-to-use [dev container](https://code.visualstudio.com/docs/remote/containers) that includes everything you need to reproduce the analysis (or do a similar one of your own!), including [R](https://r-project.org) and [Quarto](https://quarto.org).
 
-1. [Launch this project in GitHub Codespaces](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=560730482)
-2. If you have Docker installed, you can build and run the container locally:
+You can run the container in GitHub Codespaces without any setup:
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/360-info/report-population-power)
+
+Or, if you have Docker installed, you can build and run the container locally:
+
   - Download or clone the project
   - Open it in [Visual Studio Code](https://code.visualstudio.com)
   - Run the **Remote-Containers: Reopen in Container** command

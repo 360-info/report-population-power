@@ -14,3 +14,6 @@ Thumbs.db
 
 # quarto
 /.quarto/
+
+# unprocessed data
+data/WPP2022_*.csv
