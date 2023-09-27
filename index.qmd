@@ -320,6 +320,18 @@ pop_selected |>
 dep_ratio_selected
 ```
 
+For Flourish, let's widen by country:
+
+```{r}
+#| label: widen-dep-ratio
+
+dep_ratio_selected |>
+  select(Location, Time, r_total_dependent) |>
+  pivot_wider(names_from = Location, values_from = r_total_dependent) |>
+  write_csv(here("data", "dep-ratio-wide.csv"))
+
+```
+
 ```{r}
 #| label: plot-dependency-ratio
 

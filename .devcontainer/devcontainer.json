@@ -22,8 +22,10 @@
 		},
 		/* add additional r packages here */
 		"ghcr.io/rocker-org/devcontainer-features/r-packages:1": {
-			"packages": "github::rstudio/renv,tidyverse,here,httpgd,janitor,slider,github::360-info/themes360info"
-		}
+			"packages": "github::rstudio/renv,tidyverse,here,httpgd,janitor,slider,gganimate,github::360-info/themes360info"
+		},
+		/* ffmpeg in this container for building animations */
+		"ghcr.io/devcontainers-contrib/features/ffmpeg-apt-get:1": {}
 	},
 
 	"postCreateCommand": "sudo cp /workspaces/report-population-power/openssl.cnf /etc/ssl/openssl.cnf"
